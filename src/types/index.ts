@@ -26,14 +26,24 @@ export interface COADocument {
     processedAt?: Date;
 }
 
-// Extracted data types
+// Batch Analysis Data types
+export interface BatchData {
+    filename: string;
+    batch_number: string;
+    manufacture_date: string;
+    manufacturer: string;
+    test_results: Record<string, string>;
+}
+
+// Extracted data types (legacy)
 export interface ExtractedField {
     id: string;
-    documentId: string;
+    documentId?: string;
     fieldName: string;
     fieldValue: string;
     confidenceScore: number;
     originalText?: string;
+    filename?: string;
 }
 
 // API Response types
@@ -44,46 +54,48 @@ export interface ApiResponse<T> {
     message?: string;
 }
 
-// File upload response
-export interface FileUploadResponse {
-    documentId: string;
-    filename: string;
-    status: string;
+// Directory processing request
+export interface DirectoryProcessRequest {
+    compound_id: string;
+    template_id: string;
+    directory_path?: string;
 }
 
-// Processing result
-export interface ProcessingResult {
-    documentId: string;
-    extractedData: ExtractedField[];
+// Batch processing result
+export interface BatchProcessingResult {
+    processedFiles: string[];
+    failedFiles: Array<{filename: string; error: string}>;
+    totalFiles: number;
+    batchData: BatchData[];
     status: 'success' | 'partial' | 'failed';
     message?: string;
 }
 
-// App state types
+// App state types (updated for batch processing)
 export interface AppState {
     selectedCompound?: Compound;
     selectedTemplate?: Template;
-    uploadedDocument?: COADocument;
-    extractedData: ExtractedField[];
+    extractedData: ExtractedField[]; // Legacy support
     isLoading: boolean;
     error?: string;
 }
 
-// Form data types
-export interface COAFormData {
-    lotNumber: string;
-    manufacturer: string;
-    storageCondition: string;
+// Test Parameters from base template
+export interface TestParameter {
+    name: string;
+    acceptanceCriterion: string;
+    key: string;
+}
+
+// COA Table Structure
+export interface COATable {
+    title: string;
+    headers: string[];
+    parameters: TestParameter[];
+    batchData: BatchData[];
 }
 
 // API Endpoints
-declare const process: {
-    env: {
-        [key: string]: string | undefined;
-    };
-};
-
-
 export const API_BASE_URL = (() => {
   const hostname = window.location.hostname;
 
@@ -93,3 +105,39 @@ export const API_BASE_URL = (() => {
   }
   return "https://10.8.63.207:8000"; 
 })();
+
+// Template test parameters mapping
+export const TEMPLATE_TEST_PARAMETERS = {
+    TABLE_2: [
+        { name: "Appearance -- visual inspection", criterion: "Light yellow to yellow powder", key: "Appearance -- visual inspection" },
+        { name: "Identification", criterion: "", key: "" },
+        { name: "IR", criterion: "Conforms to reference standard", key: "IR" },
+        { name: "HPLC", criterion: "Conforms to reference standard", key: "HPLC" },
+        { name: "Assay -- HPLC (on anhydrous basis, %w/w)", criterion: "97.0-103.0", key: "Assay -- HPLC (on anhydrous basis, %w/w)" },
+        { name: "Organic Impurities -- HPLC (%w/w)", criterion: "", key: "" },
+        { name: "Single unspecified impurity", criterion: "≤ 0.50", key: "Single unspecified impurity" },
+        { name: "BGB-24860", criterion: "", key: "BGB-24860" },
+        { name: "RRT 0.56", criterion: "", key: "RRT 0.56" },
+        { name: "RRT 0.70", criterion: "", key: "RRT 0.70" },
+        { name: "RRT 0.72-0.73", criterion: "", key: "RRT 0.72-0.73" },
+        { name: "RRT 0.76", criterion: "", key: "RRT 0.76" },
+        { name: "RRT 0.80", criterion: "", key: "RRT 0.80" },
+        { name: "RRT 1.10", criterion: "", key: "RRT 1.10" },
+        { name: "Total impurities", criterion: "≤ 2.0", key: "Total impurities" },
+        { name: "Enantiomeric Impurity -- HPLC (%w/w)", criterion: "≤ 1.0", key: "Enantiomeric Impurity -- HPLC (%w/w)" },
+        { name: "Residual Solvents -- GC (ppm)", criterion: "", key: "" },
+        { name: "Dichloromethane", criterion: "≤ 600", key: "Dichloromethane" },
+        { name: "Ethyl acetate", criterion: "≤ 5000", key: "Ethyl acetate" },
+        { name: "Isopropanol", criterion: "≤ 5000", key: "Isopropanol" },
+        { name: "Methanol", criterion: "≤ 3000", key: "Methanol" },
+        { name: "Tetrahydrofuran", criterion: "≤ 720", key: "Tetrahydrofuran" }
+    ],
+    TABLE_3: [
+        { name: "Residue on Ignition (%w/w)", criterion: "≤ 0.2", key: "Residue on Ignition (%w/w)" },
+        { name: "Elemental Impurities -- ICP-MS", criterion: "", key: "" },
+        { name: "Palladium (ppm)", criterion: "≤ 25", key: "Palladium (ppm)" },
+        { name: "Polymorphic Form -- XRPD", criterion: "Conforms to reference standard", key: "Polymorphic Form -- XRPD" },
+        { name: "Water Content -- KF (%w/w)", criterion: "Report result", key: "Water Content -- KF (%w/w)" },
+        { name: "RRT 0.83", criterion: "", key: "RRT 0.83" }
+    ]
+};
